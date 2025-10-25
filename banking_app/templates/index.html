@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 5rem 0;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Welcome to SecureBank</h1>
+                <p class="lead mb-4">Experience secure, modern banking with advanced features and 24/7 availability. Your financial future starts here.</p>
+                <div class="d-flex gap-3">
+                    {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Open Account
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    {% else %}
+                        {% if current_user.is_customer() %}
+                            <a href="{{ url_for('customer.dashboard') }}" class="btn btn-light btn-lg">
+                                <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-light btn-lg">
+                                <i class="fas fa-cogs me-2"></i>Admin Dashboard
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-shield-alt" style="font-size: 8rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-lock text-primary mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Bank-Grade Security</h5>
+                    <p class="card-text">Advanced encryption and multi-factor authentication keep your money safe.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-mobile-alt text-primary mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">24/7 Access</h5>
+                    <p class="card-text">Manage your accounts anytime, anywhere with our secure online platform.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line text-primary mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Smart Analytics</h5>
+                    <p class="card-text">Track your spending and savings goals with intelligent insights.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <h2 class="mb-4">Why Choose SecureBank?</h2>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <h3 class="text-primary">10M+</h3>
+                    <p>Satisfied Customers</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h3 class="text-primary">99.9%</h3>
+                    <p>Uptime Guarantee</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h3 class="text-primary">24/7</h3>
+                    <p>Customer Support</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <h3 class="text-primary">FDIC</h3>
+                    <p>Insured up to $250,000</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}System Health - SecureBank Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-heartbeat me-2"></i>System Health Monitor</h2>
+            <p class="text-muted">Real-time monitoring of all system components</p>
+        </div>
+    </div>
+
+    <!-- Health Status Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shield-alt me-2"></i>System Components Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for component, data in health_data.items() %}
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="card {% if data.status == 'healthy' %}border-success{% else %}border-danger{% endif %}">
+                                <div class="card-body text-center">
+                                    <i class="fas {% if component == 'database' %}fa-database
+                                               {% elif component == 'api' %}fa-plug
+                                               {% elif component == 'authentication' %}fa-key
+                                               {% else %}fa-exchange-alt{% endif %} 
+                                               {% if data.status == 'healthy' %}text-success{% else %}text-danger{% endif %} mb-2" 
+                                       style="font-size: 2rem;"></i>
+                                    <h6 class="card-title">{{ component.title() }}</h6>
+                                    <span class="badge {% if data.status == 'healthy' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ data.status.title() }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Response: {{ data.response_time }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-server me-2"></i>Server Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>CPU Usage</span>
+                            <span>23%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 23%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Memory Usage</span>
+                            <span>67%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: 67%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Disk Usage</span>
+                            <span>45%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" style="width: 45%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Network I/O</span>
+                            <span>12%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" style="width: 12%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area me-2"></i>Application Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h4 class="text-primary">1,247</h4>
+                            <small class="text-muted">Active Sessions</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">99.98%</h4>
+                            <small class="text-muted">Uptime</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h4 class="text-info">2,543</h4>
+                            <small class="text-muted">Requests/min</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">89ms</h4>
+                            <small class="text-muted">Avg Response</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Status -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Security & Compliance Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <i class="fas fa-lock text-success mb-2" style="font-size: 2rem;"></i>
+                                <h6>SSL Certificate</h6>
+                                <span class="badge bg-success">Valid until Dec 2025</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <i class="fas fa-user-shield text-success mb-2" style="font-size: 2rem;"></i>
+                                <h6>Authentication</h6>
+                                <span class="badge bg-success">Fully Operational</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <i class="fas fa-database text-success mb-2" style="font-size: 2rem;"></i>
+                                <h6>Data Encryption</h6>
+                                <span class="badge bg-success">AES-256 Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>All security checks passed!</strong> Last security scan completed 2 hours ago.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

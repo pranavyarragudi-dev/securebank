@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account - SecureBank{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-plus-circle text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h2 class="fw-bold">Create New Account</h2>
+                        <p class="text-muted">Choose your account type</p>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-4">
+                            {{ form.account_type.label(class="form-label fw-semibold") }}
+                            {{ form.account_type(class="form-select") }}
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.initial_deposit.label(class="form-label fw-semibold") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.initial_deposit(class="form-control", placeholder="0.00") }}
+                            </div>
+                            <small class="text-muted">Optional - you can start with $0</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Create Account
+                            </button>
+                            <a href="{{ url_for('customer.accounts') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

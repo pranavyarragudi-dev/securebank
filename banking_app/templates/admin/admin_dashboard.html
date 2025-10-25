@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SecureBank{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-cogs me-2"></i>System Administration Dashboard</h2>
+            <p class="text-muted">Monitor and manage the SecureBank platform</p>
+        </div>
+    </div>
+
+    <!-- System Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Users</h6>
+                            <h2 class="mb-0">{{ total_users }}</h2>
+                        </div>
+                        <i class="fas fa-users" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Active Accounts</h6>
+                            <h2 class="mb-0">{{ total_accounts }}</h2>
+                        </div>
+                        <i class="fas fa-wallet" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Balance</h6>
+                            <h2 class="mb-0">${{ "%.0f"|format(total_balance) }}</h2>
+                        </div>
+                        <i class="fas fa-dollar-sign" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">System Status</h6>
+                            <h2 class="mb-0"><i class="fas fa-check-circle"></i></h2>
+                            <small>All Systems Operational</small>
+                        </div>
+                        <i class="fas fa-heartbeat" style="font-size: 2rem; opacity: 0.7;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4><i class="fas fa-bolt me-2"></i>Quick Actions</h4>
+            <div class="row">
+                <div class="col-md-2 mb-2">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-users me-2"></i>Manage Users
+                    </a>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <a href="{{ url_for('admin.accounts') }}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-wallet me-2"></i>View Accounts
+                    </a>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <a href="{{ url_for('admin.transactions') }}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-exchange-alt me-2"></i>Transactions
+                    </a>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <a href="{{ url_for('admin.system_health') }}" class="btn btn-outline-warning w-100">
+                        <i class="fas fa-heartbeat me-2"></i>System Health
+                    </a>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="generateReport()">
+                        <i class="fas fa-file-alt me-2"></i>Reports
+                    </button>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <button class="btn btn-outline-dark w-100" onclick="showSettings()">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-activity me-2"></i>Recent System Activity</h5>
+                    <a href="{{ url_for('admin.transactions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>From/To</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>{{ transaction.created_at.strftime('%m/%d %I:%M %p') }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if transaction.transaction_type == 'deposit' %}bg-success
+                                                {% elif transaction.transaction_type == 'withdrawal' %}bg-warning
+                                                {% else %}bg-info{% endif %}"
+                                            >
+                                                {{ transaction.transaction_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'transfer' %}
+                                                {{ transaction.from_account.account_number }} → {{ transaction.to_account.account_number }}
+                                            {% elif transaction.transaction_type == 'deposit' %}
+                                                → {{ transaction.to_account.account_number }}
+                                            {% else %}
+                                                {{ transaction.from_account.account_number }} →
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ transaction.status.title() }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateReport() {
+    alert('Report generation feature coming soon!');
+}
+
+function showSettings() {
+    alert('System settings panel coming soon!');
+}
+</script>
+{% endblock %}
