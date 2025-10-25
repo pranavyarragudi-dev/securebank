@@ -5,7 +5,13 @@ from banking_app import db
 import random
 import string
 
+
+# ----------------------------------------------------------------------
+# Role model (renamed to avoid Postgres "role" reserved keyword conflict)
+# ----------------------------------------------------------------------
 class Role(db.Model):
+    __tablename__ = 'user_role'  # ✅ renamed from 'role'
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.String(200))
@@ -13,7 +19,13 @@ class Role(db.Model):
     def __repr__(self):
         return f'<Role {self.name}>'
 
+
+# ----------------------------------------------------------------------
+# User model
+# ----------------------------------------------------------------------
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -23,7 +35,9 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False)
+
+    # ✅ updated foreign key reference to new table name
+    role_id = db.Column(db.Integer, db.ForeignKey('user_role.id'), nullable=False)
 
     # Relationships
     role = db.relationship('Role', backref='users')
@@ -44,7 +58,13 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
+
+# ----------------------------------------------------------------------
+# Account model
+# ----------------------------------------------------------------------
 class Account(db.Model):
+    __tablename__ = 'account'
+
     id = db.Column(db.Integer, primary_key=True)
     account_number = db.Column(db.String(20), unique=True, nullable=False)
     account_type = db.Column(db.String(20), nullable=False)  # checking, savings
@@ -54,12 +74,18 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     # Relationships
-    transactions_sent = db.relationship('Transaction', 
-                                      foreign_keys='Transaction.from_account_id',
-                                      backref='from_account', lazy='dynamic')
-    transactions_received = db.relationship('Transaction',
-                                          foreign_keys='Transaction.to_account_id', 
-                                          backref='to_account', lazy='dynamic')
+    transactions_sent = db.relationship(
+        'Transaction',
+        foreign_keys='Transaction.from_account_id',
+        backref='from_account',
+        lazy='dynamic'
+    )
+    transactions_received = db.relationship(
+        'Transaction',
+        foreign_keys='Transaction.to_account_id',
+        backref='to_account',
+        lazy='dynamic'
+    )
 
     def generate_account_number(self):
         return ''.join(random.choices(string.digits, k=10))
@@ -78,7 +104,13 @@ class Account(db.Model):
     def __repr__(self):
         return f'<Account {self.account_number}>'
 
+
+# ----------------------------------------------------------------------
+# Transaction model
+# ----------------------------------------------------------------------
 class Transaction(db.Model):
+    __tablename__ = 'transaction'
+
     id = db.Column(db.Integer, primary_key=True)
     transaction_type = db.Column(db.String(20), nullable=False)  # transfer, deposit, withdrawal
     amount = db.Column(db.Float, nullable=False)
