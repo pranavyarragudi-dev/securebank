@@ -33,13 +33,27 @@
                             <td>{{ user.first_name }} {{ user.last_name }}</td>
                             <td>{{ user.email }}</td>
                             <td>
-                                <span class="badge {{ 'bg-danger' if user.role.name == 'admin' else 'bg-primary' }}">
-                                    {{ user.role.name.title() }}
-                                </span>
+                                {% if user.role %}
+                                    <span class="badge {{ 'bg-danger' if user.role.name == 'admin' else 'bg-primary' }}">
+                                        {{ user.role.name.title() }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unknown</span>
+                                {% endif %}
                             </td>
-                            <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
                             <td>
-                                <span class="badge bg-success">Active</span>
+                                {% if user.created_at %}
+                                    {{ user.created_at.strftime('%b %d, %Y') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
