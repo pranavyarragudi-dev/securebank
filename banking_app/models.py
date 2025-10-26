@@ -11,7 +11,7 @@ import string
 # ----------------------------------------------------------------------
 class Role(db.Model):
     __tablename__ = 'user_role'  # ✅ renamed from 'role'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.String(200))
@@ -36,15 +36,16 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
-    # ✅ updated foreign key reference to new table name
+    # ✅ foreign key updated to match user_role
     role_id = db.Column(db.Integer, db.ForeignKey('user_role.id'), nullable=False)
 
     # Relationships
     role = db.relationship('Role', backref='users')
     accounts = db.relationship('Account', backref='owner', lazy='dynamic')
 
+    # ✅ Explicitly use pbkdf2 for compatibility with your admin password
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
