@@ -2,7 +2,8 @@ name: SecureBank Failover Monitor
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # runs every 5 minutes automatically
+    - cron: "* * * * *"  # runs every 1 minute
+  
   workflow_dispatch:         # allows manual demo trigger
 
 jobs:
