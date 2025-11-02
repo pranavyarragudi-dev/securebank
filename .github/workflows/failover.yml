@@ -1,33 +1,31 @@
-name: SecureBank Failover Monitor
+name: Cloudflare DNS Failover
 
 on:
   schedule:
-    - cron: "* * * * *"  # runs every 1 minute
-  
-  workflow_dispatch:         # allows manual demo trigger
+    - cron: "*/3 * * * *"   # runs every 3 minutes
+  workflow_dispatch:        # allows manual trigger
 
 jobs:
-  monitor:
+  failover:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests
+      - name: Install dependencies
+        run: pip install requests
 
-    - name: Run failover script
-      env:
-        DUCKDNS_DOMAIN: securebank-cloud
-        DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
-        MAIN_URL: https://securebank-inhj.onrender.com
-        BACKUP_URL: https://securebank-backup.onrender.com
-      run: python duck_dns.py
+      - name: Run DNS Failover Script
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          DOMAIN_NAME: securebank.is-a.dev
+          MAIN_APP: ${{ secrets.MAIN_APP }}
+          BACKUP_APP: ${{ secrets.BACKUP_APP }}
+        run: python dns_duck.py
