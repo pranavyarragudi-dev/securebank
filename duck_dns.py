@@ -1,94 +1,107 @@
-import requests
 import os
 import time
+import requests
+from datetime import datetime
 
-# === ENVIRONMENT VARIABLES ===
+# ===========================
+# 🔧 ENVIRONMENT VARIABLES
+# ===========================
 CF_API_TOKEN = os.getenv("CF_API_TOKEN")
-ZONE_ID = os.getenv("CF_ZONE_ID")
-DOMAIN = os.getenv("DOMAIN_NAME")           # e.g., securebank.is-a.dev
-MAIN_APP = os.getenv("MAIN_APP")            # e.g., securebank-inhj.onrender.com
-BACKUP_APP = os.getenv("BACKUP_APP")        # e.g., securebank-backup.onrender.com
+CF_ZONE_ID = os.getenv("CF_ZONE_ID")
+DOMAIN_NAME = os.getenv("DOMAIN_NAME")  # example: securebank.is-a.dev
+MAIN_APP = os.getenv("MAIN_APP")        # https://securebank-inhj.onrender.com
+BACKUP_APP = os.getenv("BACKUP_APP")    # https://securebank-backup.onrender.com
 
-HEADERS = {
-    "Authorization": f"Bearer {CF_API_TOKEN}",
-    "Content-Type": "application/json"
-}
+# ===========================
+# 🧩 UTIL FUNCTIONS
+# ===========================
+def log(msg):
+    """Timestamped console logger"""
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}", flush=True)
 
 
 def check_health(url):
-    """Ping the app and return True if it’s alive"""
-    try:
-        print(f"🔍 Checking {url} ...")
-        res = requests.get(f"https://{url}", timeout=6)
-        if res.status_code == 200:
-            print(f"✅ {url} is healthy.")
-            return True
-        else:
-            print(f"⚠️ {url} returned status {res.status_code}")
-            return False
-    except Exception as e:
-        print(f"❌ {url} not reachable: {e}")
-        return False
+    """Checks service health with retry, redirects allowed."""
+    for attempt in range(2):
+        try:
+            log(f"🔍 Checking {url} (try {attempt+1})")
+            r = requests.get(url, timeout=10, allow_redirects=True)
+            log(f"↪️ Response {r.status_code}")
+            if r.status_code in [200, 301, 302]:
+                return True
+        except Exception as e:
+            log(f"⚠️ Health check failed for {url}: {e}")
+        time.sleep(3)
+    return False
 
 
 def get_record_id():
-    """Fetch DNS record ID from Cloudflare"""
-    url = f"https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/dns_records?type=CNAME&name={DOMAIN}"
-    res = requests.get(url, headers=HEADERS).json()
-    if res.get("success") and res["result"]:
-        record_id = res["result"][0]["id"]
-        print(f"🔹 Found DNS record ID: {record_id}")
-        return record_id
-    else:
-        print("❌ Could not find DNS record for domain.")
-        return None
+    """Fetch DNS record ID for given domain from Cloudflare."""
+    headers = {"Authorization": f"Bearer {CF_API_TOKEN}", "Content-Type": "application/json"}
+    r = requests.get(
+        f"https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records?type=CNAME&name={DOMAIN_NAME}",
+        headers=headers
+    )
+    result = r.json()
+    if result.get("success") and result["result"]:
+        return result["result"][0]["id"]
+    log("❌ Could not fetch DNS record ID from Cloudflare.")
+    return None
 
 
-def update_dns(target):
-    """Update DNS CNAME record"""
+def update_record(target):
+    """Update Cloudflare DNS CNAME record to point to target."""
     record_id = get_record_id()
     if not record_id:
-        print("🚫 DNS record not found. Cannot update.")
+        log("❌ Record ID not found, skipping update.")
         return
 
-    payload = {
+    headers = {"Authorization": f"Bearer {CF_API_TOKEN}", "Content-Type": "application/json"}
+    data = {
         "type": "CNAME",
-        "name": DOMAIN,
-        "content": target,
+        "name": DOMAIN_NAME,
+        "content": target.replace("https://", ""),  # Cloudflare expects hostname only
         "ttl": 120,
         "proxied": False
     }
 
-    print(f"🌀 Updating DNS → {DOMAIN} → {target}")
-    res = requests.put(
-        f"https://api.cloudflare.com/client/v4/zones/{ZONE_ID}/dns_records/{record_id}",
-        headers=HEADERS,
-        json=payload
+    r = requests.put(
+        f"https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records/{record_id}",
+        headers=headers, json=data
     )
 
-    if res.status_code == 200 and res.json().get("success"):
-        print(f"✅ DNS successfully updated to {target}")
+    if r.status_code == 200 and r.json().get("success"):
+        log(f"✅ DNS updated → {DOMAIN_NAME} → {target}")
     else:
-        print(f"❌ DNS update failed: {res.text}")
+        log(f"❌ DNS update failed: {r.text}")
 
 
+# ===========================
+# 🚀 MAIN FAILOVER LOGIC
+# ===========================
 def main():
-    print("\n🚀 Starting SecureBank Auto DNS Failover Check\n" + "=" * 50)
+    log("ℹ️ ✅ SecureBank Failover Monitor Started")
 
-    if check_health(MAIN_APP):
-        print("🌐 Main app active → setting DNS to MAIN")
-        update_dns(MAIN_APP)
+    main_ok = check_health(MAIN_APP)
+    if main_ok:
+        log("✅ Main app is healthy — using MAIN instance.")
+        update_record(MAIN_APP)
+        return
+
+    # If main fails
+    log("⚠️ Main app is DOWN — checking backup...")
+    backup_ok = check_health(BACKUP_APP)
+
+    if backup_ok:
+        log("✅ Backup app is healthy — switching to BACKUP instance.")
+        update_record(BACKUP_APP)
     else:
-        print("⚠️ Main app down → checking backup...")
-        if check_health(BACKUP_APP):
-            print("✅ Backup reachable → switching DNS to BACKUP")
-            update_dns(BACKUP_APP)
-        else:
-            print("❌ Both servers down! Manual check needed.")
-
-    print("=" * 50)
-    print("✅ DNS failover check completed.\n")
+        log("❌ Both MAIN and BACKUP are unreachable! Manual check required.")
 
 
+# ===========================
+# 🔄 EXECUTION
+# ===========================
 if __name__ == "__main__":
     main()
+    log("🏁 Check complete. Exiting now (GitHub Action mode).")
