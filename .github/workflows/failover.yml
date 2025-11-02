@@ -28,4 +28,4 @@ jobs:
           DOMAIN_NAME: securebank.is-a.dev
           MAIN_APP: ${{ secrets.MAIN_APP }}
           BACKUP_APP: ${{ secrets.BACKUP_APP }}
-        run: python dns_duck.py
+        run: python duck_dns.py
