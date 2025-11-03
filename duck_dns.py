@@ -54,7 +54,7 @@ def update_record(target):
     record_id = get_record_id()
     if not record_id:
         log("❌ Record ID not found, skipping update.")
-        return
+        return False
 
     headers = {"Authorization": f"Bearer {CF_API_TOKEN}", "Content-Type": "application/json"}
     data = {
@@ -72,8 +72,10 @@ def update_record(target):
 
     if r.status_code == 200 and r.json().get("success"):
         log(f"✅ DNS updated → {DOMAIN_NAME} → {target}")
+        return True
     else:
         log(f"❌ DNS update failed: {r.text}")
+        return False
 
 
 # ===========================
@@ -85,7 +87,10 @@ def main():
     main_ok = check_health(MAIN_APP)
     if main_ok:
         log("✅ Main app is healthy — using MAIN instance.")
-        update_record(MAIN_APP)
+        updated = update_record(MAIN_APP)
+        if updated:
+            # 👇 This line is parsed by the dashboard
+            print(f"Active server: {MAIN_APP}", flush=True)
         return
 
     # If main fails
@@ -94,9 +99,13 @@ def main():
 
     if backup_ok:
         log("✅ Backup app is healthy — switching to BACKUP instance.")
-        update_record(BACKUP_APP)
+        updated = update_record(BACKUP_APP)
+        if updated:
+            # 👇 This line is parsed by the dashboard
+            print(f"Active server: {BACKUP_APP}", flush=True)
     else:
         log("❌ Both MAIN and BACKUP are unreachable! Manual check required.")
+        print("Active server: Unknown", flush=True)
 
 
 # ===========================
